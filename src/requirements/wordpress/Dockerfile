@@ -28,7 +28,7 @@ RUN mkdir -p /var/www/html && \
     chown -R nobody:nobody /var/www/html
 
 # Copie um arquivo de configuração personalizado do WordPress, se necessário
-# COPY wp-config.php /var/www/html/
+COPY wp-config.php /var/www/html/
 
 # Inicie o PHP-FPM
 CMD ["php-fpm8", "-F"]
