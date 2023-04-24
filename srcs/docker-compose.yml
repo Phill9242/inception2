@@ -1,0 +1,79 @@
+version: "3.9"
+
+services:
+
+  mariadb:
+    image: mariadb
+    container_name: mariadb
+    restart: unless-stopped
+    build:
+      context: ./requirements/mariadb
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    expose:
+      - "3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=wordpress
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - wp-network
+
+  wordpress:
+    image: wordpress
+    container_name: wordpress
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DB_USER=${MYSQL_USER}
+      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - WORDPRESS_AUTH_KEY=${WORDPRESS_AUTH_KEY}
+      - WORDPRESS_SECURE_AUTH_KEY=${WORDPRESS_SECURE_AUTH_KEY}
+      - WORDPRESS_LOGGED_IN_KEY=${WORDPRESS_LOGGED_IN_KEY}
+      - WORDPRESS_NONCE_KEY=${WORDPRESS_NONCE_KEY}
+      - WORDPRESS_AUTH_SALT=${WORDPRESS_AUTH_SALT}
+      - WORDPRESS_SECURE_AUTH_SALT=${WORDPRESS_SECURE_AUTH_SALT}
+      - WORDPRESS_LOGGED_IN_SALT=${WORDPRESS_LOGGED_IN_SALT}
+      - WORDPRESS_NONCE_SALT=${WORDPRESS_NONCE_SALT}
+    depends_on:
+      - mariadb
+    build:
+      context: ./requirements/wordpress
+      dockerfile: Dockerfile
+    expose:
+      - "9000"
+    volumes:
+      - wp_data:/var/www/html
+    networks:
+      - wp-network
+
+  nginx:
+    image: nginx
+    container_name: nginx
+    restart: unless-stopped
+    depends_on:
+      - wordpress
+    build:
+      context: ./requirements/nginx
+      dockerfile: Dockerfile
+    ports:
+      - "443:443"
+    volumes:
+      - wp_data:/var/www/html
+    networks:
+      - wp-network
+
+networks:
+  wp-network:
+    driver: bridge
+
+volumes:
+    wp_data:
+        external: true
+    db_data:
+        external: true
